@@ -1,13 +1,22 @@
 import type { KLineData } from "klinecharts";
 
+// Reuse KLineData from klinecharts as the project's OHLCV shape.
+// This keeps type compatibility with the charting library and
+// avoids copying the structure. KLineData already includes
+// timestamp, open, high, low, close and volume fields.
 export type OHLCV = KLineData
 
+/**
+ * Settings used to configure the Bollinger Bands indicator.
+ * Kept intentionally small and serializable so the UI can
+ * store and pass this object around without surprises.
+ */
 export interface BollingerBandsSettings {
-  length: number;
-  maType: 'SMA';
-  source: 'close';
-  stdDevMultiplier: number;
-  offset: number;
+  length: number; // window length for SMA/stddev
+  maType: 'SMA'; // currently only SMA is implemented
+  source: 'close'; // only 'close' supported for now
+  stdDevMultiplier: number; // multiplier for bands (typically 2)
+  offset: number; // visual shift of the series
   style: {
     basis: {
       visible: boolean;
@@ -29,11 +38,13 @@ export interface BollingerBandsSettings {
     };
     fill: {
       visible: boolean;
-      opacity: number;
+      opacity: number; // 0..1 alpha for band fill
     };
   };
 }
 
+// Data point shape returned by the indicator computation. The arrays
+// returned by computeBollingerBands align 1:1 with the input candles.
 export interface BollingerBandsData {
   timestamp: number;
   basis: number;

@@ -19,6 +19,15 @@ import {
   BollingerBandsSettings
 } from "@/lib/types";
 
+/**
+ * Main page of the app. Responsibilities:
+ * - load OHLCV sample data from `public/data/ohlcv.json`
+ * - manage Bollinger Bands visibility and settings
+ * - render controls and the chart
+ +
+ * The page uses client-side data fetching for simplicity; in a larger
+ * app you'd likely fetch server-side or via an API with caching.
+ */
 const Index = () => {
   const [ohlcvData, setOhlcvData] = useState<OHLCV[]>([]);
   const [bollingerSettings, setBollingerSettings] =
@@ -27,7 +36,8 @@ const Index = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Load OHLCV data
+  // Load OHLCV data from the bundled sample file. The file lives in
+  // `public/data/ohlcv.json` so it can be fetched directly.
   useEffect(() => {
     const loadData = async () => {
       try {

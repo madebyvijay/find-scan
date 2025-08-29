@@ -6,6 +6,18 @@ import type { Chart as KLineChart, KLineData } from "klinecharts";
 import { OHLCV, BollingerBandsSettings, BollingerBandsData } from "@/lib/types";
 import { computeBollingerBands } from "@/lib/indicators/bollinger";
 
+/**
+ * Chart component wraps the `klinecharts` library.
+ * Responsibilities:
+ * - initialize and dispose the chart instance
+ * - map OHLCV data into the klinecharts shape
+ * - compute and (where supported) apply the Bollinger Bands indicator
+ *
+ * Notes:
+ * - The implementation tries to pass custom styles to the built-in
+ *   BOLL indicator but falls back gracefully if the installed chart
+ *   version doesn't support options.
+ */
 interface ChartProps {
   data: OHLCV[];
   bollingerSettings: BollingerBandsSettings;
@@ -17,13 +29,13 @@ const Chart = ({ data, bollingerSettings, showBollinger }: ChartProps) => {
   const chartRef = useRef<KLineChart | null>(null);
   const [bollingerData, setBollingerData] = useState<BollingerBandsData[]>([]);
 
+  // Initialize the chart once on mount and dispose on unmount.
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    // Initialize chart with basic configuration
     chartRef.current = init(chartContainerRef.current);
 
-    // Configure grid with lower opacity
+    // Example style tweak to make the grid subtle on dark backgrounds.
     if (chartRef.current) {
       chartRef.current.setStyles({
         grid: {
@@ -45,7 +57,7 @@ const Chart = ({ data, bollingerSettings, showBollinger }: ChartProps) => {
     };
   }, []);
 
-  // Update chart data
+  // Push new OHLCV data to the chart whenever `data` changes.
   useEffect(() => {
     if (!chartRef.current || !data.length) return;
 
@@ -61,7 +73,9 @@ const Chart = ({ data, bollingerSettings, showBollinger }: ChartProps) => {
     chartRef.current.applyNewData(klineData);
   }, [data]);
 
-  // Calculate Bollinger Bands
+  // Compute Bollinger Bands whenever inputs change. We keep a local copy
+  // mostly so we can react to it; the charting library will render the
+  // indicator itself when possible.
   useEffect(() => {
     if (!data.length) return;
 
@@ -69,17 +83,19 @@ const Chart = ({ data, bollingerSettings, showBollinger }: ChartProps) => {
     setBollingerData(calculatedBands);
   }, [data, bollingerSettings]);
 
-  // Display Bollinger Bands information
+  // Add/Remove the BOLL indicator on the chart. This attempts to provide
+  // the settings object (styles and params). If the klinecharts version
+  // doesn't accept options, the code falls back to calling createIndicator
+  // without options to avoid breaking.
   useEffect(() => {
     if (!chartRef.current) return;
     // Remove any existing Bollinger Band indicators first
     chartRef.current.removeIndicator();
     if (!showBollinger || !bollingerData.length) return;
 
-    // Recreate the built-in Bollinger Bands indicator using current settings.
-    // The klinecharts API accepts params for built-in indicators (e.g. [length, stdDev]).
-    // Cast to any to allow passing the options object without strict type definitions.
-    // Use a narrow typed cast to avoid `any` lint complaints while still allowing options to be passed
+    // The chart instance exposes a `createIndicator` function in some
+    // versions. We perform a cautious cast and feature-detect before
+    // attempting to pass an options object.
     const createIndicator = (
       chartRef.current as unknown as {
         createIndicator?: (

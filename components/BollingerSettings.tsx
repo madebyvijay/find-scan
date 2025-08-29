@@ -21,6 +21,12 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { BollingerBandsSettings } from "@/lib/types";
 
+/**
+ * Modal for editing Bollinger Bands settings.
+ * The component keeps a local copy of settings to allow immediate
+ * UI responsiveness; all changes are propagated up via
+ * `onSettingsChange` so the parent can react (and persist if needed).
+ */
 interface BollingerSettingsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -37,6 +43,7 @@ const BollingerSettings = ({
   const [localSettings, setLocalSettings] =
     useState<BollingerBandsSettings>(settings);
 
+  // Generic handler for top-level input fields (length, maType, source, etc.)
   const handleInputsChange = (
     field: keyof BollingerBandsSettings,
     value: unknown
@@ -47,6 +54,8 @@ const BollingerSettings = ({
     console.log(newSettings)
   };
 
+  // Handler for nested `style` fields. We build a new object to
+  // preserve React immutability expectations.
   const handleStyleChange = (
     band: "basis" | "upper" | "lower" | "fill",
     field: string,
@@ -66,6 +75,8 @@ const BollingerSettings = ({
     onSettingsChange(newSettings);
   };
 
+  // Small color picker helper that uses an ephemeral <input type="color" />
+  // to present the native color chooser while also exposing a textual input.
   const ColorPicker = ({
     value,
     onChange
