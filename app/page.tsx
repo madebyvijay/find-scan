@@ -1,103 +1,178 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { TrendingUp, Settings, Plus } from "lucide-react";
+import Chart from "@/components/Chart";
+import BollingerSettings from "@/components/BollingerSettings";
+import {
+  OHLCV,
+  DEFAULT_BOLLINGER_SETTINGS,
+  BollingerBandsSettings
+} from "@/lib/types";
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+const Index = () => {
+  const [ohlcvData, setOhlcvData] = useState<OHLCV[]>([]);
+  const [bollingerSettings, setBollingerSettings] =
+    useState<BollingerBandsSettings>(DEFAULT_BOLLINGER_SETTINGS);
+  const [showBollinger, setShowBollinger] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load OHLCV data
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const response = await fetch("/data/ohlcv.json");
+        const data: OHLCV[] = await response.json();
+        setOhlcvData(data);
+      } catch (error) {
+        console.error("Failed to load OHLCV data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleAddBollinger = () => {
+    setShowBollinger(true);
+  };
+
+  const handleRemoveBollinger = () => {
+    setShowBollinger(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-pulse space-y-4">
+            <div className="w-12 h-12 bg-primary/20 rounded-full mx-auto" />
+            <p className="text-muted-foreground">Loading chart data...</p>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background p-4">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <TrendingUp className="w-8 h-8 text-primary" />
+            FindScan Trading Platform
+          </h1>
+          <p className="text-muted-foreground">
+            Professional Bollinger Bands analysis with KLineCharts integration
+          </p>
+        </div>
+
+        {/* Controls */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Indicators</CardTitle>
+            <CardDescription>
+              Add and configure technical analysis indicators
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              {!showBollinger ? (
+                <Button onClick={handleAddBollinger} variant="default">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Bollinger Bands
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="px-3 py-1">
+                    Bollinger Bands Active
+                  </Badge>
+                  <Button
+                    onClick={() => setSettingsOpen(true)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </Button>
+                  <Button
+                    onClick={handleRemoveBollinger}
+                    variant="destructive"
+                    size="sm"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {showBollinger && (
+              <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Length:</span>{" "}
+                    {bollingerSettings.length}
+                  </div>
+                  <div>
+                    <span className="font-medium">MA Type:</span>{" "}
+                    {bollingerSettings.maType}
+                  </div>
+                  <div>
+                    <span className="font-medium">StdDev:</span>{" "}
+                    {bollingerSettings.stdDevMultiplier}
+                  </div>
+                  <div>
+                    <span className="font-medium">Offset:</span>{" "}
+                    {bollingerSettings.offset}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Price Chart</CardTitle>
+            <CardDescription>
+              Candlestick chart with technical indicators - {ohlcvData.length}{" "}
+              data points loaded
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="h-[600px] p-4">
+              <Chart
+                data={ohlcvData}
+                bollingerSettings={bollingerSettings}
+                showBollinger={showBollinger}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Settings Modal */}
+        <BollingerSettings
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          settings={bollingerSettings}
+          onSettingsChange={setBollingerSettings}
+        />
+      </div>
     </div>
   );
-}
+};
+
+export default Index;
